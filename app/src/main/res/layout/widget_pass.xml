@@ -1,119 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- v1.6：组件只挂一张 ImageView。整张画面（卡片/波浪/全部文字）由
+     WidgetRenderer 按组件实际像素 1:1 渲染，和 App 内预览同一条管线。
+     不再用 RemoteViews 的 TextView/布局 API——MIUI 启动器对这些 API 的
+     单位处理和原生安卓不一致，v2.2 与 v1.4/v1.5 的真机文字消失都出在这一层。 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- 卡片 + 液面：纯色/渐变形状图 + 玻璃边贴图，拉伸不影响清晰度 -->
     <ImageView
         android:id="@+id/art"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="fitXY"
         android:contentDescription="@string/widget_desc" />
-
-    <!-- 四行字全部是固定高度盒子，顶部对齐，实际位置由 provider 按水面计算，
-         盒子间用同一套公式排布，不会互相重叠 -->
-    <TextView
-        android:id="@+id/title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|center_horizontal"
-        android:gravity="center_horizontal"
-        android:maxLines="1"
-        android:includeFontPadding="false"
-        android:shadowColor="#80000000"
-        android:shadowDx="0"
-        android:shadowDy="1"
-        android:shadowRadius="2.5"
-        android:letterSpacing="0.12"
-        android:text="进京证"
-        android:textColor="#FFFFFF"
-        android:textSize="11sp"
-        android:autoSizeTextType="uniform"
-        android:autoSizeMinTextSize="8sp"
-        android:autoSizeMaxTextSize="12sp"
-        android:autoSizeStepGranularity="1sp" />
-
-    <TextView
-        android:id="@+id/pct"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|center_horizontal"
-        android:gravity="center"
-        android:maxLines="1"
-        android:includeFontPadding="false"
-        android:shadowColor="#80000000"
-        android:shadowDx="0"
-        android:shadowDy="1"
-        android:shadowRadius="2.5"
-        android:letterSpacing="0"
-        android:textColor="#FFFFFF"
-        android:textStyle="bold"
-        android:text="0.0%"
-        android:autoSizeTextType="uniform"
-        android:autoSizeMinTextSize="12sp"
-        android:autoSizeMaxTextSize="34sp"
-        android:autoSizeStepGranularity="1sp" />
-
-    <TextView
-        android:id="@+id/days"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|center_horizontal"
-        android:gravity="center"
-        android:maxLines="1"
-        android:includeFontPadding="false"
-        android:shadowColor="#80000000"
-        android:shadowDx="0"
-        android:shadowDy="1"
-        android:shadowRadius="2.5"
-        android:textColor="#FFFFFF"
-        android:text="剩 0.0 天"
-        android:textSize="11sp"
-        android:autoSizeTextType="uniform"
-        android:autoSizeMinTextSize="8sp"
-        android:autoSizeMaxTextSize="13sp"
-        android:autoSizeStepGranularity="1sp" />
-
-    <TextView
-        android:id="@+id/date"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|center_horizontal"
-        android:gravity="center"
-        android:maxLines="1"
-        android:includeFontPadding="false"
-        android:shadowColor="#80000000"
-        android:shadowDx="0"
-        android:shadowDy="1"
-        android:shadowRadius="2.5"
-        android:textColor="#FFFFFF"
-        android:text="至 0/0(周一)"
-        android:textSize="10sp"
-        android:autoSizeTextType="uniform"
-        android:autoSizeMinTextSize="7sp"
-        android:autoSizeMaxTextSize="12sp"
-        android:autoSizeStepGranularity="1sp" />
-
-    <TextView
-        android:id="@+id/quota"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|center_horizontal"
-        android:gravity="center"
-        android:maxLines="1"
-        android:includeFontPadding="false"
-        android:shadowColor="#80000000"
-        android:shadowDx="0"
-        android:shadowDy="1"
-        android:shadowRadius="2.5"
-        android:textColor="#FFFFFF"
-        android:text="年度余 0 次"
-        android:textSize="10sp"
-        android:autoSizeTextType="uniform"
-        android:autoSizeMinTextSize="7sp"
-        android:autoSizeMaxTextSize="12sp"
-        android:autoSizeStepGranularity="1sp" />
 
 </FrameLayout>
