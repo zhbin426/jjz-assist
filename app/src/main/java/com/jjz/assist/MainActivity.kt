@@ -139,13 +139,25 @@ class MainActivity : Activity() {
         quotaText = row(card, "年度剩余次数", "—")
         forecastText = row(card, "额度可覆盖至", "—")
 
-        // 按钮区
+        // 按钮区：三行双列（识别 / 改日期 / 次数+刷新），"记一次办理"已按用户要求移除
         val actions = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         root.addView(actions, LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
         ).apply { topMargin = dp(18) })
 
-        actions.addView(primaryButton("从相册识别进京证", 0xFFD63A2F.toInt()) {
+        fun halfRow(heightDp: Int): LinearLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(heightDp)
+            ).apply { topMargin = dp(10) }
+        }
+        fun addTo(row: LinearLayout, btn: View, last: Boolean) {
+            row.addView(btn, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply {
+                if (!last) marginEnd = dp(10)
+            })
+        }
+
+        val btnPick = primaryButton("相册识别", 0xFFD63A2F.toInt()) {
             if (!hasPhotoPermission()) {
                 requestPhotoPermission()
                 return@primaryButton
@@ -156,9 +168,8 @@ class MainActivity : Activity() {
             }
             @Suppress("DEPRECATION")
             startActivityForResult(Intent.createChooser(pick, "选择进京证图片"), pickRequest)
-        })
-
-        actions.addView(secondaryButton("直接读最近一张截图识别") {
+        }
+        val btnShot = secondaryButton("读最新截图") {
             if (!hasPhotoPermission()) {
                 requestPhotoPermission()
                 Toast.makeText(this, "需要相册权限才能直接读截图", Toast.LENGTH_SHORT).show()
@@ -166,41 +177,36 @@ class MainActivity : Activity() {
             }
             val uri = latestScreenshot()
             if (uri == null) {
-                Toast.makeText(this, "相册里没找到截图，改用上面的按钮选图", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "相册里没找到截图，改用左边的按钮选图", Toast.LENGTH_SHORT).show()
                 return@secondaryButton
             }
             openShare(uri)
-        })
+        }
+        val row1 = halfRow(50)
+        addTo(row1, btnPick, false)
+        addTo(row1, btnShot, true)
+        actions.addView(row1)
 
-        actions.addView(secondaryButton("手动修改到期日") {
+        val btnEnd = secondaryButton("改到期日") {
             val initial = PassStore.validUntil(this) ?: LocalDate.now().plusDays(6)
             DatePickerDialog(this, { _, y, m, d ->
                 PassStore.updateEnd(this, LocalDate.of(y, m + 1, d))
                 afterDataChanged()
             }, initial.year, initial.monthValue - 1, initial.dayOfMonth).show()
-        })
-
-        actions.addView(secondaryButton("手动修改生效日") {
+        }
+        val btnStart = secondaryButton("改生效日") {
             val initial = PassStore.validStart(this) ?: LocalDate.now()
             DatePickerDialog(this, { _, y, m, d ->
                 PassStore.updateStart(this, LocalDate.of(y, m + 1, d))
                 afterDataChanged()
             }, initial.year, initial.monthValue - 1, initial.dayOfMonth).show()
-        })
+        }
+        val row2 = halfRow(46)
+        addTo(row2, btnEnd, false)
+        addTo(row2, btnStart, true)
+        actions.addView(row2)
 
-        actions.addView(secondaryButton("记一次办理（次数 +1）") {
-            AlertDialog.Builder(this)
-                .setTitle("记一次办理")
-                .setMessage("确认这算作本年度第 ${PassStore.usedThisYear(this) + 1} 次办理？年度额度 ${PassStore.QUOTA} 次。")
-                .setPositiveButton("确认") { _, _ ->
-                    PassStore.markUsed(this)
-                    afterDataChanged()
-                }
-                .setNegativeButton("取消", null)
-                .show()
-        })
-
-        actions.addView(secondaryButton("录入今年剩余次数") {
+        val btnQuota = secondaryButton("今年次数") {
             val input = EditText(this).apply {
                 inputType = InputType.TYPE_CLASS_NUMBER
                 setText(PassStore.remainingQuota(this@MainActivity).toString())
@@ -222,12 +228,15 @@ class MainActivity : Activity() {
                 }
                 .setNegativeButton("取消", null)
                 .show()
-        })
-
-        actions.addView(secondaryButton("刷新桌面组件") {
+        }
+        val btnRefresh = secondaryButton("刷新组件") {
             PassWidgetProvider.updateAll(this)
             Toast.makeText(this, "组件已刷新", Toast.LENGTH_SHORT).show()
-        })
+        }
+        val row3 = halfRow(46)
+        addTo(row3, btnQuota, false)
+        addTo(row3, btnRefresh, true)
+        actions.addView(row3)
 
         root.addView(TextView(this).apply {
             text = "提示：长按桌面空白处 → 添加小部件 → 找到「进京证助手」，拖到桌面即可。到期前 2 天会自动提醒你续办。"
@@ -449,7 +458,8 @@ class MainActivity : Activity() {
         Button(this).apply {
             this.text = text
             setTextColor(Color.WHITE)
-            textSize = 15f
+            textSize = 14f
+            isAllCaps = false
             background = rounded(color, 12)
             setOnClickListener { onClick() }
             layoutParams = LinearLayout.LayoutParams(
@@ -461,7 +471,8 @@ class MainActivity : Activity() {
         Button(this).apply {
             this.text = text
             setTextColor(Color.WHITE)
-            textSize = 15f
+            textSize = 14f
+            isAllCaps = false
             background = rounded(0xFF232F29.toInt(), 12)
             setOnClickListener { onClick() }
             layoutParams = LinearLayout.LayoutParams(

@@ -124,17 +124,17 @@ class PassWidgetProvider : AppWidgetProvider() {
 
             fun dp(v: Float) = (v * density).toInt()
             views.setViewPadding(R.id.title, 0, dp(tPad), 0, 0)
-            // 铁律：setViewLayoutHeight 收的是「dp 数值 + COMPLEX_UNIT_DIP」，
-            // 绝对不能再先乘 density。v2.2 剩余天数/到期日/年度余次三行整体消失、
-            // 百分比被压小，就是这里双重换算把盒子撑到 3 倍多高，paddingTop 一挤，
-            // 内容区变负，文字被整行裁掉。
-            views.setViewLayoutHeight(R.id.pct, pH, TypedValue.COMPLEX_UNIT_DIP)
+            // 铁律 v2：盒子高度统一传「px 数值 + COMPLEX_UNIT_PX」。
+            // 真机（MIUI 启动器）实测 COMPLEX_UNIT_DIP 会被当 px 用：31 的 dp 值落成 31px 高的盒子，
+            // autoSize 最小字号都比盒子大，四行字整行被裁没，只剩没设高度的标题。
+            // 传 PX + 已换算的 px 值，在原生和 MIUI 两种实现下结果都正确。
+            views.setViewLayoutHeight(R.id.pct, dp(pH).toFloat(), TypedValue.COMPLEX_UNIT_PX)
             views.setViewPadding(R.id.pct, 0, dp(pctTop), 0, 0)
-            views.setViewLayoutHeight(R.id.days, dH, TypedValue.COMPLEX_UNIT_DIP)
+            views.setViewLayoutHeight(R.id.days, dp(dH).toFloat(), TypedValue.COMPLEX_UNIT_PX)
             views.setViewPadding(R.id.days, 0, dp(daysTop), 0, 0)
-            views.setViewLayoutHeight(R.id.date, eH, TypedValue.COMPLEX_UNIT_DIP)
+            views.setViewLayoutHeight(R.id.date, dp(eH).toFloat(), TypedValue.COMPLEX_UNIT_PX)
             views.setViewPadding(R.id.date, 0, dp(dateTop), 0, 0)
-            views.setViewLayoutHeight(R.id.quota, qH, TypedValue.COMPLEX_UNIT_DIP)
+            views.setViewLayoutHeight(R.id.quota, dp(qH).toFloat(), TypedValue.COMPLEX_UNIT_PX)
             views.setViewPadding(R.id.quota, 0, dp(quotaTop), 0, 0)
 
             // 字体统一白色（用户口径 v1.3），透明度分行递减
