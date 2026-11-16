@@ -28,7 +28,7 @@ object WidgetRenderer {
 
         val theme = PassStore.theme(context)
         val fillAlpha = PassStore.fillAlpha(context)
-        val veilAlpha = (fillAlpha / 4).coerceIn(0, 255)
+        val veilAlpha = (fillAlpha / 8).coerceIn(0, 255)   // v1.7：水上区更透，跟壁纸走得更彻底
         val radius = minOf(w, h) * 0.22f
 
         canvas.drawBitmap(
@@ -89,12 +89,14 @@ object WidgetRenderer {
         fun sizeOf(boxDp: Float) = px(boxDp) * 0.80f
 
         drawLine(canvas, "进京证", w / 2f, px(tPad + tH / 2f), sizeOf(tH), wDp * 0.86f * density, text, false, 0.12f, Color.WHITE)
-        drawLine(canvas, big, w / 2f, px(pctTop + pH / 2f), sizeOf(pH), wDp * 0.94f * density, text, true, 0f, Color.argb(255, 255, 255, 255))
-
-        if (filled) {
-            drawLine(
-                canvas, String.format("剩 %.1f 天", PassStore.remainingDaysFloat(context)), w / 2f,
-                px(daysTop + dH / 2f), sizeOf(dH), wDp * 0.92f * density, text, false, 0.02f, Color.WHITE
+        // v1.7：中间只留剩余天数，纯数字；整数部分大号、小数部分小号，基线对齐。
+        // 未设置/已过期时降级为一行状态文字。
+        if (until == null || expired) {
+            drawLine(canvas, big, w / 2f, px(daysTop + dH / 2f), sizeOf(pH) * 0.7f, wDp * 0.94f * density, text, true, 0f, Color.WHITE)
+        } else {
+            drawDaysNumber(
+                canvas, PassStore.remainingDaysFloat(context), w / 2f, px(daysTop + dH / 2f),
+                sizeOf(pH), sizeOf(dH) * 0.85f, text
             )
         }
 
@@ -105,6 +107,53 @@ object WidgetRenderer {
         )
 
         return bmp
+    }
+
+    /** 剩余天数纯数字：整数大号 + 小数小号，共用基线，整体水平居中 */
+    private fun drawDaysNumber(
+        canvas: Canvas,
+        value: Float,
+        cx: Float,
+        cy: Float,
+        bigSize: Float,
+        smallSize: Float,
+        paint: Paint
+    ) {
+        val str = String.format("%.1f", value)
+        val dot = str.indexOf('.')
+        val intPart = if (dot < 0) str else str.substring(0, dot)
+        val decPart = if (dot < 0) "" else str.substring(dot)
+
+        paint.typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+        paint.letterSpacing = 0f
+        paint.color = Color.WHITE
+        paint.textAlign = Paint.Align.LEFT
+
+        paint.textSize = bigSize
+        val mb = paint.fontMetrics
+        paint.textSize = smallSize
+
+        // 整体宽度不够时先收整数号
+        var big = bigSize
+        paint.textSize = big
+        while (paint.measureText(intPart) + paint.measureText(decPart) > canvas.width * 0.92f && big > 12f) {
+            big -= 1f
+            paint.textSize = big
+        }
+        val widthInt = paint.measureText(intPart)
+        val metricsBig = paint.fontMetrics
+        paint.textSize = smallSize
+        val widthDec = paint.measureText(decPart)
+
+        val startX = cx - (widthInt + widthDec) / 2f
+        val baseline = cy - (metricsBig.ascent + metricsBig.descent) / 2f
+
+        paint.textSize = big
+        canvas.drawText(intPart, startX, baseline, paint)
+        paint.textSize = smallSize
+        canvas.drawText(decPart, startX + widthInt, baseline, paint)
+
+        paint.textAlign = Paint.Align.CENTER
     }
 
     private fun drawLine(

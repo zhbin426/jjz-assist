@@ -10,7 +10,7 @@ from PIL import Image, ImageDraw, ImageFont
 DENSITY = 3.0
 W_DP, H_DP = 80, 160
 FILL_ALPHA = 235
-VEIL = FILL_ALPHA // 4
+VEIL = FILL_ALPHA // 8   # v1.7：水上区更透
 FONT = "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc"
 FONT_R = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
 
@@ -121,8 +121,26 @@ def render(name, liquid, pct=30):
         d.text((x, y), text, font=f, fill=(255, 255, 255, 255))
 
     line("进京证", tPad, tH, 0.86, False)
-    line(f"{pct:.1f}%", pctTop, pH, 0.94, True)
-    line(f"剩 {pct * 12 / 100:.1f} 天", daysTop, dH, 0.92, False)
+
+    def num_line(value, top_dp, box_dp):
+        sval = f"{value:.1f}"
+        ip, _, dp_ = sval.partition(".")
+        dec = "." + dp_
+        fbig = ImageFont.truetype(FONT, int(px(pH) * 0.80))
+        fsmall = ImageFont.truetype(FONT, max(9, int(px(dH) * 0.80 * 0.85)))
+        wi = fbig.getlength(ip)
+        wd = fsmall.getlength(dec)
+        x = (w - wi - wd) / 2
+        ab, db_ = fbig.getmetrics()
+        as_, ds_ = fsmall.getmetrics()
+        cy = px(top_dp + box_dp / 2)
+        baseline = cy + (ab - db_) / 2
+        d.text((x + 1, baseline - ab + 2), ip, font=fbig, fill=(0, 0, 0, 128))
+        d.text((x, baseline - ab), ip, font=fbig, fill=(255, 255, 255, 255))
+        d.text((x + wi + 1, baseline - as_ + 2), dec, font=fsmall, fill=(0, 0, 0, 128))
+        d.text((x + wi, baseline - as_), dec, font=fsmall, fill=(255, 255, 255, 255))
+
+    num_line(pct * 12 / 100, daysTop, dH)
     line("至 12/28(周一)", dateTop, eH, 0.90, False)
     line("年度余 9 次", quotaTop, qH, 0.90, False)
     return out
@@ -147,7 +165,7 @@ def main():
         canvas.paste(card, (x, y), card)
         d.text((x, y + ch + 6), name, font=ft, fill=(255, 255, 255))
         d.text((x, y + ch + 36), f"液面 #{liq:06X} · 水上半透明跟壁纸", font=fs, fill=(170, 176, 186))
-    p = "/root/userdata/workspace/进京证助手-主题预览-v1.4.png"
+    p = "/root/userdata/workspace/进京证助手-主题预览-v1.7.png"
     canvas.save(p)
     print("MEDIA:" + p)
 
