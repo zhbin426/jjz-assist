@@ -67,8 +67,8 @@ object WidgetRenderer {
         val qPad = (hDp * 0.055f).coerceIn(5f, 9f)
         val gap = (hDp * 0.018f).coerceAtLeast(1.5f)
 
-        val quotaTop = hDp - qPad - qH
-        val dateTop = quotaTop - gap - eH
+        val quotaTop = hDp - 8f - qH          // v1.8：静态贴底，与 XML marginBottom 8dp 对齐
+        val dateTop = quotaTop - 2f - eH       // 与 XML marginTop 2dp 对齐
         val topLimit = tPad + tH + gap
 
         val surfaceDp = if (expired) hDp * 0.42f else hDp * (1f - pct / 100f)
@@ -89,20 +89,20 @@ object WidgetRenderer {
         fun sizeOf(boxDp: Float) = px(boxDp) * 0.80f
 
         drawLine(canvas, "进京证", w / 2f, px(tPad + tH / 2f), sizeOf(tH), wDp * 0.86f * density, text, false, 0.12f, Color.WHITE)
-        // v1.7：中间只留剩余天数，纯数字；整数部分大号、小数部分小号，基线对齐。
-        // 未设置/已过期时降级为一行状态文字。
+
+        // v1.8：与组件静态布局一致——天数数字固定在卡片正中，不跟水面浮动
         if (until == null || expired) {
-            drawLine(canvas, big, w / 2f, px(daysTop + dH / 2f), sizeOf(pH) * 0.7f, wDp * 0.94f * density, text, true, 0f, Color.WHITE)
+            drawLine(canvas, big, w / 2f, h / 2f, sizeOf(pH) * 0.7f, wDp * 0.94f * density, text, true, 0f, Color.WHITE)
         } else {
             drawDaysNumber(
-                canvas, PassStore.remainingDaysFloat(context), w / 2f, px(daysTop + dH / 2f),
-                sizeOf(pH), sizeOf(dH) * 0.85f, text
+                canvas, PassStore.remainingDaysFloat(context), w / 2f, h / 2f,
+                sizeOf(pH), sizeOf(pH) * 0.62f, text
             )
         }
 
         drawLine(canvas, dateLine, w / 2f, px(dateTop + eH / 2f), sizeOf(eH), wDp * 0.90f * density, text, false, 0.02f, Color.WHITE)
         drawLine(
-            canvas, "年度余 ${PassStore.remainingQuota(context)} 次", w / 2f, px(quotaTop + qH / 2f),
+            canvas, "余 ${PassStore.remainingQuota(context)}", w / 2f, px(quotaTop + qH / 2f),
             sizeOf(qH), wDp * 0.90f * density, text, false, 0.02f, Color.WHITE
         )
 

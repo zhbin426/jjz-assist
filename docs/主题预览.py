@@ -97,7 +97,7 @@ def render(name, liquid, pct=30):
     pH = clamp(hh * 0.26, 20, 40); dH = clamp(hh * 0.125, 11, 17)
     eH = clamp(hh * 0.115, 10, 15); qH = eH
     qPad = clamp(hh * 0.055, 5, 9); gap = max(hh * 0.018, 1.5)
-    quotaTop = hh - qPad - qH; dateTop = quotaTop - gap - eH
+    quotaTop = hh - 8 - qH; dateTop = quotaTop - 2 - eH
     topLimit = tPad + tH + gap
     surface = hh * (1 - pct / 100)
     daysCap = dateTop - dH - gap
@@ -127,7 +127,7 @@ def render(name, liquid, pct=30):
         ip, _, dp_ = sval.partition(".")
         dec = "." + dp_
         fbig = ImageFont.truetype(FONT, int(px(pH) * 0.80))
-        fsmall = ImageFont.truetype(FONT, max(9, int(px(dH) * 0.80 * 0.85)))
+        fsmall = ImageFont.truetype(FONT, max(9, int(px(pH) * 0.80 * 0.62)))
         wi = fbig.getlength(ip)
         wd = fsmall.getlength(dec)
         x = (w - wi - wd) / 2
@@ -140,9 +140,9 @@ def render(name, liquid, pct=30):
         d.text((x + wi + 1, baseline - as_ + 2), dec, font=fsmall, fill=(0, 0, 0, 128))
         d.text((x + wi, baseline - as_), dec, font=fsmall, fill=(255, 255, 255, 255))
 
-    num_line(pct * 12 / 100, daysTop, dH)
+    num_line(pct * 12 / 100, hh / 2 - pH / 2, pH)
     line("至 12/28(周一)", dateTop, eH, 0.90, False)
-    line("年度余 9 次", quotaTop, qH, 0.90, False)
+    line("余 9", quotaTop, qH, 0.90, False)
     return out
 
 
@@ -165,7 +165,7 @@ def main():
         canvas.paste(card, (x, y), card)
         d.text((x, y + ch + 6), name, font=ft, fill=(255, 255, 255))
         d.text((x, y + ch + 36), f"液面 #{liq:06X} · 水上半透明跟壁纸", font=fs, fill=(170, 176, 186))
-    p = "/root/userdata/workspace/进京证助手-主题预览-v1.7.png"
+    p = "/root/userdata/workspace/进京证助手-主题预览-v1.8.png"
     canvas.save(p)
     print("MEDIA:" + p)
 

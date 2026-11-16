@@ -59,13 +59,47 @@ class PassWidgetProvider : AppWidgetProvider() {
             val wPx = (wDp * density).toInt().coerceIn(100, 1200)
             val hPx = (hDp * density).toInt().coerceIn(100, 2000)
 
-            // 组件与 App 内预览走同一条渲染管线：整张画面（卡片 / 波浪 / 全部文字）
-            // 按组件实际像素 1:1 画进位图，RemoteViews 只挂一张 ImageView。
-            // 位图尺寸=组件尺寸，fitXY 不产生拉伸；文字是 Canvas 按 px 画的，清晰不糊。
-            // 彻底绕开 MIUI 启动器对 RemoteViews 文本/布局 API 的兼容性差异
-            // （v2.2 三行消失、v1.4/v1.5 真机四行消失都出在这一层）。
+            // v1.8：位图只画背景（卡片 / 半透明水上区 / 波浪液面），不含文字，
+            // 拉伸不伤字；文字交给原生 TextView 静态布局，系统排版不压扁。
+            val theme = PassStore.theme(context)
+            val fillAlpha = PassStore.fillAlpha(context)
+            val veilAlpha = (fillAlpha / 8).coerceIn(0, 255)
+            val radius = minOf(wPx, hPx) * 0.22f
+            val today = java.time.LocalDate.now()
+            val until = PassStore.validUntil(context)
+            val expired = until == null || today.isAfter(until)
+            val pct = PassStore.percentFloat(context, today)
+            val filled = !expired && pct > 0f
+
             val views = RemoteViews(context.packageName, R.layout.widget_pass)
-            views.setImageViewBitmap(R.id.art, WidgetRenderer.render(context, wPx, hPx))
+            views.setImageViewBitmap(
+                R.id.art,
+                ShapeArt.art(context, wPx, hPx, radius, theme.liquid, fillAlpha, veilAlpha, if (filled) pct else 0f)
+            )
+
+            views.setTextViewText(R.id.title, "进京证")
+            views.setInt(R.id.title, "setTextColor", Color.WHITE)
+
+            if (until == null || expired) {
+                views.setTextViewText(R.id.daysInt, if (until == null) "未设置" else "已过期")
+                views.setTextViewText(R.id.daysDec, "")
+            } else {
+                val str = String.format("%.1f", PassStore.remainingDaysFloat(context))
+                val dot = str.indexOf('.')
+                views.setTextViewText(R.id.daysInt, if (dot < 0) str else str.substring(0, dot))
+                views.setTextViewText(R.id.daysDec, if (dot < 0) "" else str.substring(dot))
+            }
+            views.setInt(R.id.daysInt, "setTextColor", Color.WHITE)
+            views.setInt(R.id.daysDec, "setTextColor", Color.WHITE)
+
+            val dateLine = when {
+                until == null -> "点开设置有效期"
+                else -> "至 ${until.monthValue}/${until.dayOfMonth}(${WEEK[until.dayOfWeek.value - 1]})"
+            }
+            views.setTextViewText(R.id.date, dateLine)
+            views.setInt(R.id.date, "setTextColor", Color.WHITE)
+            views.setTextViewText(R.id.quota, "余 ${PassStore.remainingQuota(context)}")
+            views.setInt(R.id.quota, "setTextColor", Color.WHITE)
 
             val open = PendingIntent.getActivity(
                 context,

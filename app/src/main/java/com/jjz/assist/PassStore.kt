@@ -37,12 +37,15 @@ object PassStore {
 
     fun savePass(c: Context, start: LocalDate, end: LocalDate, countOnce: Boolean) {
         val total = (ChronoUnit.DAYS.between(start, end).toInt() + 1).coerceIn(1, 7)
+        // v1.8：起止日与已存记录完全相同 = 同一张证重复识别，不重复计次
+        //（额度消耗过快的根因：每次识别存证都 +1，重扫同一张证也扣）
+        val same = validStart(c) == start && validUntil(c) == end
         p(c).edit()
             .putString(K_START, start.toString())
             .putString(K_UNTIL, end.toString())
             .putInt(K_TOTAL, total)
             .apply()
-        if (countOnce) markUsed(c)
+        if (countOnce && !same) markUsed(c)
     }
 
     /** 改到期日：进京证默认 7 天，起算日按 7 天倒推，避免把总天数算成 3 天导致 100% */

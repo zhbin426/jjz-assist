@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- v1.6：组件只挂一张 ImageView。整张画面（卡片/波浪/全部文字）由
-     WidgetRenderer 按组件实际像素 1:1 渲染，和 App 内预览同一条管线。
-     不再用 RemoteViews 的 TextView/布局 API——MIUI 启动器对这些 API 的
-     单位处理和原生安卓不一致，v2.2 与 v1.4/v1.5 的真机文字消失都出在这一层。 -->
+<!-- v1.8：原生 TextView + 全静态布局。
+     位图只画背景（卡片/半透明水上区/波浪液面），不含任何文字，拉伸不伤字；
+     文字由系统排版，彻底解决 v1.6/v1.7 位图被 fitXY 拉伸压扁的问题。
+     布局静态（标题顶 / 天数正中 / 到期日+余量底），不再调用 MIUI 上
+     行为异常的 setViewLayoutHeight / setViewPadding 动态定位 API。 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root"
     android:layout_width="match_parent"
@@ -14,5 +15,103 @@
         android:layout_height="match_parent"
         android:scaleType="fitXY"
         android:contentDescription="@string/widget_desc" />
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="6dp"
+        android:gravity="center_horizontal"
+        android:maxLines="1"
+        android:includeFontPadding="false"
+        android:letterSpacing="0.12"
+        android:text="进京证"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp"
+        android:shadowColor="#80000000"
+        android:shadowDx="0"
+        android:shadowDy="1"
+        android:shadowRadius="2.5" />
+
+    <!-- 剩余天数：整数大号 + 小数小号，基线对齐，整组水平垂直居中，不跟水面浮动 -->
+    <LinearLayout
+        android:id="@+id/daysRow"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="horizontal"
+        android:baselineAligned="true">
+
+        <TextView
+            android:id="@+id/daysInt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:includeFontPadding="false"
+            android:text="0"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:textSize="38sp"
+            android:shadowColor="#80000000"
+            android:shadowDx="0"
+            android:shadowDy="1"
+            android:shadowRadius="3" />
+
+        <TextView
+            android:id="@+id/daysDec"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:includeFontPadding="false"
+            android:text=".0"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:textSize="24sp"
+            android:shadowColor="#80000000"
+            android:shadowDx="0"
+            android:shadowDy="1"
+            android:shadowRadius="3" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/bottomBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="8dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:maxLines="1"
+            android:includeFontPadding="false"
+            android:text="至 0/0(周一)"
+            android:textColor="#FFFFFF"
+            android:textSize="11sp"
+            android:shadowColor="#80000000"
+            android:shadowDx="0"
+            android:shadowDy="1"
+            android:shadowRadius="2.5" />
+
+        <TextView
+            android:id="@+id/quota"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:gravity="center_horizontal"
+            android:maxLines="1"
+            android:includeFontPadding="false"
+            android:text="余 0"
+            android:textColor="#FFFFFF"
+            android:textSize="10sp"
+            android:shadowColor="#80000000"
+            android:shadowDx="0"
+            android:shadowDy="1"
+            android:shadowRadius="2.5" />
+    </LinearLayout>
 
 </FrameLayout>
