@@ -22,6 +22,10 @@
         android:gravity="center_horizontal"
         android:maxLines="1"
         android:includeFontPadding="false"
+        android:shadowColor="#80000000"
+        android:shadowDx="0"
+        android:shadowDy="1"
+        android:shadowRadius="2.5"
         android:letterSpacing="0.12"
         android:text="进京证"
         android:textColor="#FFFFFF"
@@ -39,13 +43,17 @@
         android:gravity="center"
         android:maxLines="1"
         android:includeFontPadding="false"
-        android:letterSpacing="0.02"
+        android:shadowColor="#80000000"
+        android:shadowDx="0"
+        android:shadowDy="1"
+        android:shadowRadius="2.5"
+        android:letterSpacing="0"
         android:textColor="#FFFFFF"
         android:textStyle="bold"
         android:text="0.0%"
         android:autoSizeTextType="uniform"
-        android:autoSizeMinTextSize="10sp"
-        android:autoSizeMaxTextSize="26sp"
+        android:autoSizeMinTextSize="12sp"
+        android:autoSizeMaxTextSize="34sp"
         android:autoSizeStepGranularity="1sp" />
 
     <TextView
@@ -56,12 +64,16 @@
         android:gravity="center"
         android:maxLines="1"
         android:includeFontPadding="false"
+        android:shadowColor="#80000000"
+        android:shadowDx="0"
+        android:shadowDy="1"
+        android:shadowRadius="2.5"
         android:textColor="#FFFFFF"
         android:text="剩 0.0 天"
-        android:textSize="10sp"
+        android:textSize="11sp"
         android:autoSizeTextType="uniform"
         android:autoSizeMinTextSize="8sp"
-        android:autoSizeMaxTextSize="12sp"
+        android:autoSizeMaxTextSize="13sp"
         android:autoSizeStepGranularity="1sp" />
 
     <TextView
@@ -72,12 +84,16 @@
         android:gravity="center"
         android:maxLines="1"
         android:includeFontPadding="false"
+        android:shadowColor="#80000000"
+        android:shadowDx="0"
+        android:shadowDy="1"
+        android:shadowRadius="2.5"
         android:textColor="#FFFFFF"
         android:text="至 0/0(周一)"
-        android:textSize="9sp"
+        android:textSize="10sp"
         android:autoSizeTextType="uniform"
         android:autoSizeMinTextSize="7sp"
-        android:autoSizeMaxTextSize="11sp"
+        android:autoSizeMaxTextSize="12sp"
         android:autoSizeStepGranularity="1sp" />
 
     <TextView
@@ -88,12 +104,16 @@
         android:gravity="center"
         android:maxLines="1"
         android:includeFontPadding="false"
+        android:shadowColor="#80000000"
+        android:shadowDx="0"
+        android:shadowDy="1"
+        android:shadowRadius="2.5"
         android:textColor="#FFFFFF"
         android:text="年度余 0 次"
-        android:textSize="9sp"
+        android:textSize="10sp"
         android:autoSizeTextType="uniform"
         android:autoSizeMinTextSize="7sp"
-        android:autoSizeMaxTextSize="11sp"
+        android:autoSizeMaxTextSize="12sp"
         android:autoSizeStepGranularity="1sp" />
 
 </FrameLayout>

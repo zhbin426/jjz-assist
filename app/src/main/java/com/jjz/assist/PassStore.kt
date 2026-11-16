@@ -18,6 +18,8 @@ object PassStore {
     private const val K_YEAR = "used_year"
     private const val K_BG_ALPHA = "bg_alpha"
     private const val K_FILL_COLOR = "fill_color"
+    private const val K_THEME = "theme_id"
+    private const val K_C_LIQ = "custom_liquid"
 
     /** 六环内进京证每个自然年最多 12 次 */
     const val QUOTA = 12
@@ -98,6 +100,35 @@ object PassStore {
             .putInt(K_BG_ALPHA, alpha.coerceIn(0, 255))
             .putInt(K_FILL_COLOR, color)
             .apply()
+    }
+
+    // ---- 主题 ----
+
+    fun themeId(c: Context): String = p(c).getString(K_THEME, "jjz") ?: "jjz"
+
+    fun setThemeId(c: Context, id: String) {
+        p(c).edit().putString(K_THEME, id).apply()
+    }
+
+    fun customLiquid(c: Context): Int = p(c).getInt(K_C_LIQ, 0xFFB3261E.toInt())
+
+    /** 选自定义色即切到 custom 主题 */
+    fun setCustomTheme(c: Context, liquid: Int) {
+        p(c).edit()
+            .putInt(K_C_LIQ, liquid)
+            .putString(K_THEME, "custom")
+            .apply()
+    }
+
+    fun setFillAlpha(c: Context, alpha: Int) {
+        p(c).edit().putInt(K_BG_ALPHA, alpha.coerceIn(0, 255)).apply()
+    }
+
+    /** 当前生效主题：预置或自定义三色 */
+    fun theme(c: Context): Theme {
+        val id = themeId(c)
+        if (id == "custom") return Theme("custom", "自定义", customLiquid(c))
+        return Themes.byId(id) ?: Themes.ALL[0]
     }
 
     fun isExpired(c: Context, today: LocalDate = LocalDate.now()): Boolean {

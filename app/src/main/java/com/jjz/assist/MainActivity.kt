@@ -241,7 +241,7 @@ class MainActivity : Activity() {
         return scroll
     }
 
-    /** 组件外观：背景不透明度 + 液面颜色 */
+    /** 组件外观：预置主题 + 自定义三色 + 不透明度 */
     private fun addAppearanceSection(root: LinearLayout) {
         val section = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -259,11 +259,133 @@ class MainActivity : Activity() {
             setTypeface(typeface, Typeface.BOLD)
         })
 
+        fun refreshPreview() {
+            PassWidgetProvider.updateAll(this)
+            previewView?.setImageBitmap(WidgetRenderer.render(this, 300, 600))
+        }
+
+        // ---- 预置主题条 ----
+        section.addView(TextView(this).apply {
+            text = "预置液面色（点一下直接套用；也可在下方自定义）"
+            setTextColor(0xFF9AA79F.toInt())
+            textSize = 13f
+            setPadding(0, dp(10), 0, dp(6))
+        })
+
+        val chips = LinkedHashMap<View, String>()
+        val chipsRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        val chipScroll = android.widget.HorizontalScrollView(this).apply {
+            isHorizontalScrollBarEnabled = false
+            addView(chipsRow)
+        }
+        section.addView(chipScroll)
+
+        val customBox = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            visibility = View.GONE
+        }
+
+        fun selectedStroke(v: View, on: Boolean) {
+            v.background = GradientDrawable().apply {
+                setColor(0xFF24342C.toInt())
+                cornerRadius = dp(10).toFloat()
+                setStroke(if (on) dp(2) else 0, 0xFFFFD66B.toInt())
+            }
+        }
+
+        fun markCurrent() {
+            val cur = PassStore.themeId(this)
+            chips.forEach { (v, id) -> selectedStroke(v, id == cur) }
+            customBox.visibility = if (cur == "custom") View.VISIBLE else View.GONE
+        }
+
+        fun addChip(id: String, name: String, liquid: Int) {
+            val chip = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = android.view.Gravity.CENTER_HORIZONTAL
+                setPadding(dp(8), dp(8), dp(8), dp(6))
+                setOnClickListener {
+                    PassStore.setThemeId(this@MainActivity, id)
+                    markCurrent()
+                    refreshPreview()
+                }
+            }
+            // 色块 = 液面色；水面以上是中性半透明，不占配色
+            val sw = View(this).apply { setBackgroundColor(liquid) }
+            chip.addView(sw, LinearLayout.LayoutParams(dp(34), dp(34)))
+            chip.addView(TextView(this).apply {
+                text = name
+                textSize = 10f
+                setTextColor(0xFFCED8D1.toInt())
+                setPadding(0, dp(4), 0, 0)
+            })
+            chipsRow.addView(chip, LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply { rightMargin = dp(8) })
+            chips[chip] = id
+        }
+
+        Themes.ALL.forEach { addChip(it.id, it.name, it.liquid) }
+        addChip("custom", "自定义", PassStore.customLiquid(this))
+
+        section.addView(customBox, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        ).apply { topMargin = dp(10) })
+
+        // ---- 自定义三色（水面以上 / 水面以下 / 字体）----
+        fun pickerRow(label: String, initial: Int, apply: (Int) -> Unit) {
+            customBox.addView(TextView(this).apply {
+                text = label
+                setTextColor(0xFF9AA79F.toInt())
+                textSize = 12f
+                setPadding(0, dp(8), 0, dp(4))
+            })
+            val dot = View(this).apply {
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.OVAL
+                    setColor(initial)
+                    setStroke(dp(2), Color.WHITE)
+                }
+            }
+            val rowL = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = android.view.Gravity.CENTER_VERTICAL
+            }
+            rowL.addView(dot, LinearLayout.LayoutParams(dp(26), dp(26)).apply { rightMargin = dp(10) })
+            rowL.addView(TextView(this).apply {
+                text = "在下方色板按住取色"
+                setTextColor(0xFF7C8B83.toInt())
+                textSize = 11f
+            })
+            customBox.addView(rowL)
+            customBox.addView(PaletteView(this).apply {
+                setColor(initial)
+                onColorChanging = { c ->
+                    dot.background = GradientDrawable().apply {
+                        shape = GradientDrawable.OVAL
+                        setColor(c)
+                        setStroke(dp(2), Color.WHITE)
+                    }
+                }
+                onColorPicked = { c ->
+                    apply(c)
+                    markCurrent()
+                    refreshPreview()
+                }
+            }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(64)).apply { topMargin = dp(4) })
+        }
+        pickerRow("液面颜色（水面以上自动做中性半透明，跟壁纸走）", PassStore.customLiquid(this)) { c ->
+            PassStore.setCustomTheme(this, c)
+        }
+
+        markCurrent()
+
+        // ---- 不透明度 ----
         val alphaLabel = TextView(this).apply {
             text = "前景（液面）不透明度 ${PassStore.fillAlpha(this@MainActivity) * 100 / 255}%"
             setTextColor(0xFF9AA79F.toInt())
             textSize = 13f
-            setPadding(0, dp(10), 0, 0)
+            setPadding(0, dp(12), 0, 0)
         }
         section.addView(alphaLabel)
 
@@ -279,65 +401,12 @@ class MainActivity : Activity() {
                 override fun onStartTrackingTouch(sb: android.widget.SeekBar?) {}
 
                 override fun onStopTrackingTouch(sb: android.widget.SeekBar?) {
-                    val percent = sb?.progress ?: 90
-                    PassStore.setWidgetStyle(
-                        this@MainActivity,
-                        percent * 255 / 100,
-                        PassStore.fillColor(this@MainActivity)
-                    )
-                    PassWidgetProvider.updateAll(this@MainActivity)
-                    previewView?.setImageBitmap(WidgetRenderer.render(this@MainActivity, 300, 600))
+                    PassStore.setFillAlpha(this@MainActivity, (sb?.progress ?: 90) * 255 / 100)
+                    refreshPreview()
                 }
             })
         }
         section.addView(seek)
-
-        section.addView(TextView(this).apply {
-            text = "液面颜色（按住色板取色）"
-            setTextColor(0xFF9AA79F.toInt())
-            textSize = 13f
-            setPadding(0, dp(14), 0, dp(8))
-        })
-
-        val dot = View(this).apply {
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.OVAL
-                setColor(PassStore.fillColor(this@MainActivity))
-                setStroke(dp(2), Color.WHITE)
-            }
-        }
-        val previewRow = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            setPadding(0, dp(4), 0, dp(10))
-        }
-        previewRow.addView(dot, LinearLayout.LayoutParams(dp(30), dp(30)).apply { rightMargin = dp(12) })
-        previewRow.addView(TextView(this).apply {
-            text = "当前颜色，下面色板任意位置按住即可换色"
-            setTextColor(0xFFCED8D1.toInt())
-            textSize = 12f
-        })
-        section.addView(previewRow)
-
-        val palette = PaletteView(this).apply {
-            setColor(PassStore.fillColor(this@MainActivity))
-            onColorChanging = { color ->
-                dot.background = GradientDrawable().apply {
-                    shape = GradientDrawable.OVAL
-                    setColor(color)
-                    setStroke(dp(2), Color.WHITE)
-                }
-            }
-            onColorPicked = { color ->
-                PassStore.setWidgetStyle(
-                    this@MainActivity,
-                    PassStore.fillAlpha(this@MainActivity),
-                    color
-                )
-                PassWidgetProvider.updateAll(this@MainActivity)
-                previewView?.setImageBitmap(WidgetRenderer.render(this@MainActivity, 300, 600))
-            }
-        }
-        section.addView(palette, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(110)))
 
         section.addView(TextView(this).apply {
             text = "组件效果预览"
