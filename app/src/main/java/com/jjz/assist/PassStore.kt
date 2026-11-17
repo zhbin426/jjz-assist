@@ -79,6 +79,14 @@ object PassStore {
     fun remainingDaysFloat(c: Context, now: java.time.ZonedDateTime = java.time.ZonedDateTime.now()): Float =
         ((Math.round(remainingDaysRaw(c, now) * 10.0) / 10.0)).toFloat()
 
+    /** v1.9：剩余小时（一位小数），不足 1 天时用 */
+    fun remainingHoursFloat(c: Context): Float =
+        ((Math.round(remainingDaysRaw(c) * 24.0 * 10.0) / 10.0)).toFloat()
+
+    /** v1.9：剩余分钟（整数），不足 1 小时时用 */
+    fun remainingMinutesInt(c: Context): Int =
+        Math.round(remainingDaysRaw(c) * 24.0 * 60.0).toInt().coerceAtLeast(0)
+
     /** 精确到一位小数的进度，例如 58.3 */
     fun percentFloat(c: Context, today: LocalDate = LocalDate.now()): Float {
         val u = validUntil(c) ?: return 0f

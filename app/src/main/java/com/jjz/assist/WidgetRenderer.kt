@@ -94,9 +94,16 @@ object WidgetRenderer {
         if (until == null || expired) {
             drawLine(canvas, big, w / 2f, h / 2f, sizeOf(pH) * 0.7f, wDp * 0.94f * density, text, true, 0f, Color.WHITE)
         } else {
+            // v1.9：与组件同口径三档；单位小字与标题同号
+            val hours = PassStore.remainingHoursFloat(context)
+            val (value, unit) = when {
+                hours >= 24f -> hours / 24f to ""
+                hours >= 1f -> hours to "小时"
+                else -> PassStore.remainingMinutesInt(context).toFloat() to "分钟"
+            }
             drawDaysNumber(
-                canvas, PassStore.remainingDaysFloat(context), w / 2f, h / 2f,
-                sizeOf(pH), sizeOf(pH) * 0.62f, text
+                canvas, value, unit, w / 2f, h / 2f,
+                sizeOf(pH), sizeOf(pH) * 0.62f, sizeOf(tH), text
             )
         }
 
@@ -113,13 +120,15 @@ object WidgetRenderer {
     private fun drawDaysNumber(
         canvas: Canvas,
         value: Float,
+        unit: String,
         cx: Float,
         cy: Float,
         bigSize: Float,
         smallSize: Float,
+        unitSize: Float,
         paint: Paint
     ) {
-        val str = String.format("%.1f", value)
+        val str = if (unit == "分钟") String.format("%.0f", value) else String.format("%.1f", value)
         val dot = str.indexOf('.')
         val intPart = if (dot < 0) str else str.substring(0, dot)
         val decPart = if (dot < 0) "" else str.substring(dot)
@@ -144,14 +153,22 @@ object WidgetRenderer {
         val metricsBig = paint.fontMetrics
         paint.textSize = smallSize
         val widthDec = paint.measureText(decPart)
+        val gap = bigSize * 0.06f
+        paint.textSize = unitSize
+        val widthUnit = if (unit.isEmpty()) 0f else paint.measureText(unit) + gap
 
-        val startX = cx - (widthInt + widthDec) / 2f
+        val startX = cx - (widthInt + widthDec + widthUnit) / 2f
         val baseline = cy - (metricsBig.ascent + metricsBig.descent) / 2f
 
         paint.textSize = big
         canvas.drawText(intPart, startX, baseline, paint)
         paint.textSize = smallSize
         canvas.drawText(decPart, startX + widthInt, baseline, paint)
+        if (unit.isNotEmpty()) {
+            paint.textSize = unitSize
+            paint.typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+            canvas.drawText(unit, startX + widthInt + widthDec + gap, baseline, paint)
+        }
 
         paint.textAlign = Paint.Align.CENTER
     }

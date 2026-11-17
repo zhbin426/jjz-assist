@@ -80,17 +80,26 @@ class PassWidgetProvider : AppWidgetProvider() {
             views.setTextViewText(R.id.title, "进京证")
             views.setInt(R.id.title, "setTextColor", Color.WHITE)
 
+            // v1.9：≥24h 按天（一位小数）；<24h 按小时（一位小数）+「小时」；<1h 按分钟（整数）+「分钟」
             if (until == null || expired) {
                 views.setTextViewText(R.id.daysInt, if (until == null) "未设置" else "已过期")
                 views.setTextViewText(R.id.daysDec, "")
+                views.setTextViewText(R.id.daysUnit, "")
             } else {
-                val str = String.format("%.1f", PassStore.remainingDaysFloat(context))
-                val dot = str.indexOf('.')
-                views.setTextViewText(R.id.daysInt, if (dot < 0) str else str.substring(0, dot))
-                views.setTextViewText(R.id.daysDec, if (dot < 0) "" else str.substring(dot))
+                val hours = PassStore.remainingHoursFloat(context)
+                val (main, unit) = when {
+                    hours >= 24f -> String.format("%.1f", hours / 24f) to ""
+                    hours >= 1f -> String.format("%.1f", hours) to "小时"
+                    else -> PassStore.remainingMinutesInt(context).toString() to "分钟"
+                }
+                val dot = main.indexOf('.')
+                views.setTextViewText(R.id.daysInt, if (dot < 0) main else main.substring(0, dot))
+                views.setTextViewText(R.id.daysDec, if (dot < 0) "" else main.substring(dot))
+                views.setTextViewText(R.id.daysUnit, unit)
             }
             views.setInt(R.id.daysInt, "setTextColor", Color.WHITE)
             views.setInt(R.id.daysDec, "setTextColor", Color.WHITE)
+            views.setInt(R.id.daysUnit, "setTextColor", Color.WHITE)
 
             val dateLine = when {
                 until == null -> "点开设置有效期"

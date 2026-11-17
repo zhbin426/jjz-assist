@@ -123,22 +123,36 @@ def render(name, liquid, pct=30):
     line("进京证", tPad, tH, 0.86, False)
 
     def num_line(value, top_dp, box_dp):
-        sval = f"{value:.1f}"
+        # v1.9：≥1天按天；<1天按小时+「小时」；<1小时按分钟+「分钟」
+        if value >= 1:
+            sval, unit = f"{value:.1f}", ""
+        elif value * 24 >= 1:
+            sval, unit = f"{value * 24:.1f}", "小时"
+        else:
+            sval, unit = f"{round(value * 24 * 60):.0f}", "分钟"
         ip, _, dp_ = sval.partition(".")
-        dec = "." + dp_
+        dec = "." + dp_ if dp_ else ""
         fbig = ImageFont.truetype(FONT, int(px(pH) * 0.80))
         fsmall = ImageFont.truetype(FONT, max(9, int(px(pH) * 0.80 * 0.62)))
+        funit = ImageFont.truetype(FONT_R, max(9, int(px(tH) * 0.80)))
         wi = fbig.getlength(ip)
         wd = fsmall.getlength(dec)
-        x = (w - wi - wd) / 2
+        gap = px(pH) * 0.80 * 0.06
+        wu = funit.getlength(unit) + gap if unit else 0
+        x = (w - wi - wd - wu) / 2
         ab, db_ = fbig.getmetrics()
         as_, ds_ = fsmall.getmetrics()
         cy = px(top_dp + box_dp / 2)
         baseline = cy + (ab - db_) / 2
         d.text((x + 1, baseline - ab + 2), ip, font=fbig, fill=(0, 0, 0, 128))
         d.text((x, baseline - ab), ip, font=fbig, fill=(255, 255, 255, 255))
-        d.text((x + wi + 1, baseline - as_ + 2), dec, font=fsmall, fill=(0, 0, 0, 128))
-        d.text((x + wi, baseline - as_), dec, font=fsmall, fill=(255, 255, 255, 255))
+        if dec:
+            d.text((x + wi + 1, baseline - as_ + 2), dec, font=fsmall, fill=(0, 0, 0, 128))
+            d.text((x + wi, baseline - as_), dec, font=fsmall, fill=(255, 255, 255, 255))
+        if unit:
+            au, du_ = funit.getmetrics()
+            d.text((x + wi + wd + gap + 1, baseline - au + 2), unit, font=funit, fill=(0, 0, 0, 128))
+            d.text((x + wi + wd + gap, baseline - au), unit, font=funit, fill=(255, 255, 255, 255))
 
     num_line(pct * 12 / 100, hh / 2 - pH / 2, pH)
     line("至 12/28(周一)", dateTop, eH, 0.90, False)
@@ -146,26 +160,33 @@ def render(name, liquid, pct=30):
     return out
 
 
+DEMO = [
+    ("小时档演示", 0xB3261E, 4.2),
+    ("分钟档演示", 0xB3261E, 0.2),
+]
+
+
 def main():
     cols = 6
     cw, ch = int(W_DP * DENSITY), int(H_DP * DENSITY)
     pad, label_h = 22, 62
-    rows = (len(THEMES) + cols - 1) // cols
+    items = [(n, l, 30) for n, l in THEMES] + DEMO
+    rows = (len(items) + cols - 1) // cols
     W = pad * (cols + 1) + cw * cols
     H = pad + rows * (ch + label_h + pad)
     canvas = Image.new("RGB", (W, H), (24, 26, 30))
     d = ImageDraw.Draw(canvas)
     ft = ImageFont.truetype(FONT, 26)
     fs = ImageFont.truetype(FONT_R, 20)
-    for i, (name, liq) in enumerate(THEMES):
+    for i, (name, liq, pct) in enumerate(items):
         r, c = divmod(i, cols)
         x = pad + c * (cw + pad)
         y = pad + r * (ch + label_h + pad)
-        card = render(name, liq)
+        card = render(name, liq, pct)
         canvas.paste(card, (x, y), card)
         d.text((x, y + ch + 6), name, font=ft, fill=(255, 255, 255))
-        d.text((x, y + ch + 36), f"液面 #{liq:06X} · 水上半透明跟壁纸", font=fs, fill=(170, 176, 186))
-    p = "/root/userdata/workspace/进京证助手-主题预览-v1.8.png"
+        d.text((x, y + ch + 36), f"液面 #{liq:06X} · 剩{pct * 12 / 100:.2f}天档", font=fs, fill=(170, 176, 186))
+    p = "/root/userdata/workspace/进京证助手-主题预览-v1.9.png"
     canvas.save(p)
     print("MEDIA:" + p)
 
