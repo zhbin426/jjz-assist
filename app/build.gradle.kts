@@ -11,16 +11,20 @@ android {
         applicationId = "com.jjz.assist"
         minSdk = 31
         targetSdk = 35
-        versionCode = 10
-        versionName = "1.9"
+        versionCode = 11
+        versionName = "1.10"
     }
 
     signingConfigs {
-        create("release") {
-            storeFile = rootProject.file("jjz-release.keystore")
-            storePassword = "jjz2026assist"
-            keyAlias = "jjz"
-            keyPassword = "jjz2026assist"
+        // keystore 不在仓库里（只推文本）。文件在（本地或 CI 拼出来）才签名，
+        // 否则出 unsigned 包——保证无签名材料时 CI 仍能编译验证。
+        if (rootProject.file("jjz-release.keystore").exists()) {
+            create("release") {
+                storeFile = rootProject.file("jjz-release.keystore")
+                storePassword = "jjz2026assist"
+                keyAlias = "jjz"
+                keyPassword = "jjz2026assist"
+            }
         }
     }
 
@@ -30,7 +34,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 

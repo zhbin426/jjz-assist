@@ -1,0 +1,57 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+
+      - name: Accept SDK licenses
+        run: yes | sdkmanager --licenses > /dev/null || true
+
+      - name: Decode keystore (if present)
+        run: |
+          if [ -f signing/jjz-release.keystore.b64 ]; then
+            base64 -d signing/jjz-release.keystore.b64 > jjz-release.keystore
+            echo "keystore decoded"
+          else
+            echo "no keystore in repo, build unsigned"
+          fi
+
+      - name: Build
+        run: gradle assembleRelease --no-daemon --stacktrace
+
+      - name: Create release (signed builds only)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VER=$(grep -o 'versionName = "[^"]*"' app/build.gradle.kts | head -1 | cut -d'"' -f2)
+          TAG="v$VER"
+          if ls app/build/outputs/apk/release/*unsigned* > /dev/null 2>&1; then
+            echo "unsigned build, skip release"
+          elif gh release view "$TAG" -R "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "release $TAG exists, skip"
+          else
+            gh release create "$TAG" -R "$GITHUB_REPOSITORY" \
+              --title "$TAG" --notes "CI build $TAG" \
+              app/build/outputs/apk/release/*.apk
+          fi
