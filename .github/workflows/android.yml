@@ -30,8 +30,15 @@ jobs:
       - name: Decode keystore
         run: |
           if [ -f signing/jjz-release.keystore.b64 ]; then
-            base64 -d signing/jjz-release.keystore.b64 > jjz-release.keystore
-            echo "keystore decoded"
+            # 清洗掉可能混入的非法字符（BOM/空白/换行）再解码
+            tr -cd 'A-Za-z0-9+/=' < signing/jjz-release.keystore.b64 | base64 -d > jjz-release.keystore
+            echo "sha256 of decoded keystore:"
+            sha256sum jjz-release.keystore
+            if ! sha256sum -c <<< "78517c9e4ef4d52e18787fa1f12fbb9c84857df86126cea0c2da225d8cefcff4  jjz-release.keystore"; then
+              echo "keystore checksum mismatch!"
+              exit 1
+            fi
+            echo "keystore decoded and verified"
           else
             echo "no keystore in repo, build unsigned"
           fi
